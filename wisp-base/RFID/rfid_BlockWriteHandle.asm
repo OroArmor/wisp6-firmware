@@ -66,32 +66,36 @@ calc_wordPtr:
 
 ; Impinj hasn't implemented BlockWrite corrctly... it's more of a BulkWrite using BlockWrite rather than a real BlockWrite.
 ; Instead of using the WordCount to send multiple words, it uses an offset using the WordPtr.
+; This comment was written around 10 years ago. It's likely its implemented correctly now.
 
-;; Wait until we have all bits to extract WordCount.
-;waitOnBits_2:
-;	CMP.W   #32, R_bits                                     ;[2] Wait until first 4 bytes are fully received.
-;	JLO     waitOnBits_2                                    ;[2]
-;
-;calc_wordCnt:
-;	MOV.B   (cmd+2), R_scratch0                             ;[3] bring in top 6 bits into b5-b0 of R_scratch0 (wordCt.b7-b2)
-;	MOV.B   (cmd+3), R_scratch1                             ;[3] bring in bot 2 bits into b7b6  of R_scratch1 (wordCt.b1-b0)
-;	RLC.B   R_scratch1                                      ;[1] pull out b7 from R_scratch1 (wordCt.b1)
-;	RLC.B   R_scratch0                                      ;[1] shove it into R_scratch0 at bottom (wordCt.b1)
-;	RLC.B   R_scratch1                                      ;[1] pull out b7 from R_scratch1 (wordCt.b0)
-;	RLC.B   R_scratch0                                      ;[1] shove it into R_scratch0 at bottom (wordCt.b0)
-;	MOV.B   R_scratch0, R_scratch0                          ;[1] mask wordPtr to just lower 8 bits
-;	MOV.B  R_scratch0, &(RWData.wrData)                     ;[3] store the wordCnt
+; Wait until we have all bits to extract WordCount.
+waitOnBits_2:
+	CMP.W   #32, R_bits                                     ;[2] Wait until first 4 bytes are fully received.
+	JLO     waitOnBits_2                                    ;[2]
 
+calc_wordCnt:
+	MOV.B   (cmd+2), R_scratch0                             ;[3] bring in top 6 bits into b5-b0 of R_scratch0 (wordCt.b7-b2)
+	MOV.B   (cmd+3), R_scratch1                             ;[3] bring in bot 2 bits into b7b6  of R_scratch1 (wordCt.b1-b0)
+	RLC.B   R_scratch1                                      ;[1] pull out b7 from R_scratch1 (wordCt.b1)
+	RLC.B   R_scratch0                                      ;[1] shove it into R_scratch0 at bottom (wordCt.b1)
+	RLC.B   R_scratch1                                      ;[1] pull out b7 from R_scratch1 (wordCt.b0)
+	RLC.B   R_scratch0                                      ;[1] shove it into R_scratch0 at bottom (wordCt.b0)
+	MOV.B   R_scratch0, R_scratch0                          ;[1] mask wordPtr to just lower 8 bits
+	MOV.B   R_scratch0, &(RWData.bwrByteCount)              ;[3] store the wordCnt
 
+	RLAM.A  #4, R_scratch0
+	ADD.A   #32, R_scratch0
 ; Wait for data to write.
 waitOnBits_3:
-	CMP.W   #48, R_bits                                     ;[2] Wait until first 6 bytes are fully received.
+	CMP.W   R_scratch0, R_bits                              ;[2] Wait until all bytes are fully received.
 	JLO     waitOnBits_3                                    ;[2]
 
+	MOVA    &cmd, R12                                       ;[1] Move the location of cmd into R12
+	MOV 	#0, R_scratch0									;[1]
 store_Word:
-	MOV.B   (cmd+3), R_scratch1                             ;[3] bring in top 6 bits into b5-b0 of R_scratch1 (data.b15-b10)
-	MOV.B   (cmd+4), R_scratch2                             ;[3] bring in mid 8 bits into b7-b0 of R_scratch2 (data.b9-b2)
-	MOV.B   (cmd+5), R12                                    ;[3] bring in bot 2 bits into b7b6  of R12 (data.b1b0)
+	MOV.B   (R12+3), R_scratch1                             ;[3] bring in top 6 bits into b5-b0 of R_scratch1 (data.b15-b10)
+	MOV.B   (R12+4), R_scratch2                             ;[3] bring in mid 8 bits into b7-b0 of R_scratch2 (data.b9-b2)
+	MOV.B   (R12+5), R12                                    ;[3] bring in bot 2 bits into b7b6  of R12 (data.b1b0)
 
 	RLC.B   R_scratch2                                      ;[1]
 	RLC.B   R_scratch1                                      ;[1]
@@ -108,20 +112,26 @@ store_Word:
 	SWPB    R_scratch1                                      ;[1]
 	BIS     R_scratch2, R_scratch1                          ;[1] merge b15-b8(R_scratch1) and b7-b(R_scratch2) together into R_scratch1
 
-	MOV.B   &(RWData.wordPtr), R_scratch2                   ;[3] Put offset to R15
+	MOV.B   R_scratch0, R_scratch2
 	RLAM.A  #1, R_scratch2                                  ;[2] Offset *= 2
 	ADDX.A  &(RWData.bwrBufPtr), R_scratch2                 ;[3] Add base address to offset.
 	MOV     R_scratch1, 0(R_scratch2)                       ;[3] move the data out to the correct address.
+	ADD.A   #(2), R12                                       ;[2] Increment the command pointer by 2
+	INC     R_scratch0                                      ;[1] Increment the number of bytes received
+	CMP.W   R_scratch0, &(RWData.bwrByteCount)              ;[3] Check the number of received bytes
+	JNZ     store_Word	                                    ;[2] Jump back to receiving data
 
+	RLAM.A  #4, R_scratch0
+	ADD.A   #48, R_scratch0
 ; Wait on handle.
 waitOnBits_4:
-	CMP.W   #64, R_bits                                     ;[2]
+	CMP.W   R_scratch0, R_bits                              ;[2]
 	JLO     waitOnBits_4                                    ;[2]
 
 ; Pull handle into R_scratch1.
-	MOV.B   (cmd+5), R_scratch1                             ;[3] bring in top 6 bits into b5-b0 of R_scratch1 (data.b15-b10)
-	MOV.B   (cmd+6), R_scratch2                             ;[3] bring in mid 8 bits into b7-b0 of R_scratch2 (data.b9-b2)
-	MOV.B   (cmd+7), R12                                    ;[3] bring in bot 2 bits into b7b6  of R12 (data.b1b0)
+	MOV.B   (R12+5), R_scratch1                             ;[3] bring in top 6 bits into b5-b0 of R_scratch1 (data.b15-b10)
+	MOV.B   (R12+6), R_scratch2                             ;[3] bring in mid 8 bits into b7-b0 of R_scratch2 (data.b9-b2)
+	MOV.B   (R12+7), R12                                    ;[3] bring in bot 2 bits into b7b6  of R12 (data.b1b0)
 	
 	RLC.B   R_scratch2                                      ;[1]
 	RLC.B   R_scratch1                                      ;[1]
