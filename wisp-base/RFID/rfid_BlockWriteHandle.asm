@@ -174,9 +174,10 @@ waitOnBits_4:
 	RRC.B   (rfidBuf+3)                                     ;[6]
 	RRC.B   (rfidBuf+4)                                     ;[6]
 
+	ADD.A #10, R_scratch0
 ; Wait for the rest of the BlockWrite command bits (CRC16).
 waitOnBits_5:
-	CMP.W   #74, R_bits                                     ;[2]
+	CMP.W   R_scratch0, R_bits                              ;[2]
 	JLO     waitOnBits_5                                    ;[2]
 
 ; TODO: Figure out when we REALLY need to respond to the reader... commercial tags are not responding before they have written ALL words.
