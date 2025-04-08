@@ -98,9 +98,9 @@ void main(void) {
     wispData.epcBuf[2] = (RWData.wrData >> 8) & 0xFF;           // Unused data field
     wispData.epcBuf[3] = RWData.wordPtr & 0xFF;           // Unused data field
     wispData.epcBuf[4] = (RWData.memBank) & 0xFF;           // Unused data field
-    wispData.epcBuf[5] = bwr_array[2] & 0xFF;           // Unused data field
-    wispData.epcBuf[6] = (bwr_array[2] >> 8) & 0xFF;           // Unused data field
-    wispData.epcBuf[7] = bwr_array[3] & 0xFF;        // Unused data field
-    wispData.epcBuf[8] = (bwr_array[3] >> 8) & 0xFF;        // Unused data field
+    wispData.epcBuf[5] = bwr_array[0] & 0xFF;           // Unused data field
+    wispData.epcBuf[6] = (bwr_array[0] >> 8) & 0xFF;           // Unused data field
+    wispData.epcBuf[7] = bwr_array[1] & 0xFF;        // Unused data field
+    wispData.epcBuf[8] = (bwr_array[1] >> 8) & 0xFF;        // Unused data field
   }
 }

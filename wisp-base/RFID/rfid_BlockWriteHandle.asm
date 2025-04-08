@@ -90,35 +90,43 @@ waitOnBits_3:
 	CMP.W   R_scratch0, R_bits                              ;[2] Wait until all bytes are fully received.
 	JLO     waitOnBits_3                                    ;[2]
 
-	MOVA    &cmd, R12                                       ;[1] Move the location of cmd into R12
+	MOVA    #cmd, R12                                    ;[1] Move the location of cmd into R12
+	ADD.A   #2, R12											;
 	MOV 	#0, R_scratch0									;[1]
 store_Word:
-	MOV.B   (R12+3), R_scratch1                             ;[3] bring in top 6 bits into b5-b0 of R_scratch1 (data.b15-b10)
-	MOV.B   (R12+4), R_scratch2                             ;[3] bring in mid 8 bits into b7-b0 of R_scratch2 (data.b9-b2)
-	MOV.B   (R12+5), R12                                    ;[3] bring in bot 2 bits into b7b6  of R12 (data.b1b0)
+	MOV.B   1(R12), R_scratch1                              ;[3] bring in top 6 bits into b5-b0 of R_scratch1 (data.b15-b10)
+	MOV.B   2(R12), R_scratch2                              ;[3] bring in mid 8 bits into b7-b0 of R_scratch2 (data.b9-b2)
+	;MOV.B   3(R12), R12                                     ;[3] bring in bot 2 bits into b7b6  of R12 (data.b1b0)
 
-	RLC.B   R_scratch2                                      ;[1]
-	RLC.B   R_scratch1                                      ;[1]
-	RLC.B   R_scratch2                                      ;[1]
-	RLC.B   R_scratch1                                      ;[1]
-	RRC.B   R_scratch2                                      ;[1]
-	RRC.B   R_scratch2                                      ;[1]
+	;RLC.B   R_scratch2                                      ;[1]
+	;RLC.B   R_scratch1                                      ;[1]
+	;RLC.B   R_scratch2                                      ;[1]
+	;RLC.B   R_scratch1                                      ;[1]
+	;RRC.B   R_scratch2                                      ;[1]
+	;RRC.B   R_scratch2                                      ;[1]
 
-	RLC.B   R12                                             ;[1]
-	RLC.B   R_scratch2                                      ;[1]
-	RLC.B   R12                                             ;[1]
-	RLC.B   R_scratch2                                      ;[1]
+	;RLC.B   R12                                             ;[1]
+	;RLC.B   R_scratch2                                      ;[1]
+	;RLC.B   R12                                             ;[1]
+	;RLC.B   R_scratch2                                      ;[1]
 
 	SWPB    R_scratch1                                      ;[1]
 	BIS     R_scratch2, R_scratch1                          ;[1] merge b15-b8(R_scratch1) and b7-b(R_scratch2) together into R_scratch1
 
+	MOV.B   3(R12), R_scratch2
+	RLC.B   R_scratch2                                      ;[1]
+	RLC   R_scratch1                                             ;[1]
+	RLC.B   R_scratch2                                      ;[1]
+	RLC   R_scratch1                                             ;[1]
+
 	MOV.B   R_scratch0, R_scratch2
 	RLAM.A  #1, R_scratch2                                  ;[2] Offset *= 2
-	ADDX.A  &(RWData.bwrBufPtr), R_scratch2                 ;[3] Add base address to offset.
+	ADDX.A  RWData.bwrBufPtr, R_scratch2                 ;[3] Add base address to offset.
 	MOV     R_scratch1, 0(R_scratch2)                       ;[3] move the data out to the correct address.
 	ADD.A   #(2), R12                                       ;[2] Increment the command pointer by 2
 	INC     R_scratch0                                      ;[1] Increment the number of bytes received
-	CMP.W   R_scratch0, &(RWData.bwrByteCount)              ;[3] Check the number of received bytes
+	MOV.B   RWData.bwrByteCount, R_scratch1
+	CMP.W   R_scratch0, R_scratch1              ;[3] Check the number of received bytes
 	JNZ     store_Word	                                    ;[2] Jump back to receiving data
 
 	RLAM.A  #4, R_scratch0
@@ -129,9 +137,9 @@ waitOnBits_4:
 	JLO     waitOnBits_4                                    ;[2]
 
 ; Pull handle into R_scratch1.
-	MOV.B   (R12+5), R_scratch1                             ;[3] bring in top 6 bits into b5-b0 of R_scratch1 (data.b15-b10)
-	MOV.B   (R12+6), R_scratch2                             ;[3] bring in mid 8 bits into b7-b0 of R_scratch2 (data.b9-b2)
-	MOV.B   (R12+7), R12                                    ;[3] bring in bot 2 bits into b7b6  of R12 (data.b1b0)
+	MOV.B   1(R12), R_scratch1                             ;[3] bring in top 6 bits into b5-b0 of R_scratch1 (data.b15-b10)
+	MOV.B   2(R12), R_scratch2                             ;[3] bring in mid 8 bits into b7-b0 of R_scratch2 (data.b9-b2)
+	MOV.B   3(R12), R12                                    ;[3] bring in bot 2 bits into b7b6  of R12 (data.b1b0)
 	
 	RLC.B   R_scratch2                                      ;[1]
 	RLC.B   R_scratch1                                      ;[1]
@@ -153,9 +161,8 @@ waitOnBits_4:
 	JNE     exit_safely                                     ;[2] Handle doesn't match, so exit.
 
 ; Prepare rfid transmission buffer, CRC16 0-bit and handle.
-	MOV     (rfid.handle), R_scratch0                       ;[3] bring in the RN16
-	SWPB    R_scratch0                                      ;[1] swap bytes so we can shove full word out in one call (MSByte into dataBuf[0],...)
-	MOV     R_scratch0, &(rfidBuf)                          ;[3] load the MSByte
+	SWPB    R_scratch1                                      ;[1] swap bytes so we can shove full word out in one call (MSByte into dataBuf[0],...)
+	MOV     R_scratch1, &(rfidBuf)                          ;[3] load the MSByte
 
 	MOV     #(rfidBuf), R_scratch2                          ;[2] load &dataBuf[0] as dataPtr
 	MOV     #(2), R_scratch1                                ;[2] load num of bytes in ACK
