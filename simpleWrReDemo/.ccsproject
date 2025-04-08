@@ -11,4 +11,5 @@
 	<templateProperties value="id=com.ti.common.project.core.emptyProjectWithMainTemplate_msp430,"/>
 	<isTargetManual value="false"/>
 	<origin value="C:/Users/saffaria/WISP6/wisp-640kHz/CCS/simpleAckDemo"/>
+	<activeTargetConfiguration value="targetConfigs/MSP430FR5969.ccxml"/>
 </projectOptions>

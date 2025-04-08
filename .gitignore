@@ -5,3 +5,6 @@ config/*
 /.metadata/
 .jxbrowser.userdata/
 RemoteSystemsTempFiles/
+.clangd
+.theia/launch.json
+workspace.theia-workspace
