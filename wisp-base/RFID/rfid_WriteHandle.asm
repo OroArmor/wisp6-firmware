@@ -125,9 +125,9 @@ waitOnBits_3:
 
 ;/** @todo Clean up the slop */
 	
-	;Check if Handle Matched
-	;CMP		R_scratch0, &rfid.handle
-	;JNE		writeHandle_Ignore
+;Check if Handle Matched
+	CMP		R_scratch0, &rfid.handle
+	JNE		writeHandle_Ignore
 
 	;Pull out Data and stuff into R14 (safe, R14 isn't used by RX_SM)
 	MOV.B 	(cmd+4), R14			;[3] bring in top 6 bits into b5-b0 of R14 (RN16.b15-b10)
