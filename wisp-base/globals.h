@@ -94,8 +94,18 @@
 #include "config/wispGuts.h"
 
 //TYPEDEFS------------------------------------------------------------------------------------------------------------------------
+
+typedef enum {
+    FM0 = 0,
+    M2 = 1,
+    M4 = 2,
+    M8 = 3
+} ModulationFormat;
+
 //THE RFID STRUCT FOR INVENTORY STATE VARS
 typedef struct {
+    ModulationFormat m;                     /** The number of cycles per symbol transmitted */
+    void* txMethod;                         /** The Tx method to be used */
     uint8_t     TRext;                      /** @todo What is this member? */
     uint16_t    handle;                     /** @todo What is this member? */
     uint16_t    slotCount;                  /** @todo What is this member? */
@@ -161,7 +171,11 @@ extern volatile uint8_t     isDoingLowPwrSleep;
 
 //FUNCTION PROTOTYPES---------------------------------------------------------------------------------------------------------------//
 extern void WISP_doRFID(void);
+
 extern void TxFM0(volatile uint8_t *data, uint8_t numBytes, uint8_t numBits, uint8_t TRext); //sends out MSB first...
+extern void TxM2(volatile uint8_t *data, uint8_t numBytes, uint8_t numBits, uint8_t TRext); //sends out MSB first...
+
+extern void* TX_METHODS[4]; 
 
 // Linker hack: We need to reference assembly ISRs directly somewhere to force linker to include them in binary.
 extern void RX_ISR(void);

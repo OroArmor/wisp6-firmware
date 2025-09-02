@@ -20,7 +20,7 @@
        #include "rfid.h"
     %}
 	.def  handleQuery, handleAck, handleQR, handleQA, handleReqRN, handleSelect
-	.global TxClock, RxClock
+	.global TxClock, RxClock, TX_METHODS
 
 
 ;/PRESERVED REGISTERS-----------------------------------------------------------------------------------------------------------------
@@ -77,13 +77,13 @@ QRTimingLoop:
 	SWPB	R_scratch0				;[1] swap bytes so we can shove full word out in one call (MSByte into dataBuf[0],...)
 	MOV		R_scratch0, &(rfidBuf)	;[4] load the MSByte
 
-	;Setup TxFM0
-	;TRANSMIT (16pre,38tillTxinTxFM0 -> 54cycles)
+	;Setup Tx
+	;TRANSMIT (16pre,38tillTxinTx -> 54cycles)
 	MOV		#(rfidBuf),	R12			;[2] load the &rfidBuf[0]
 	MOV		#(2),		R13			;[1] load into corr reg (numBytes)
 	MOV		#(0),		R14			;[1] load numBits=0
 	MOV.B	rfid.TRext,	R15			;[3] load TRext
-	CALLA	#TxFM0					;[5] call the routine @us@todo: need to check RN16 in the future, fake TxFM0 in TX
+	CALLA	rfid.txMethod			;[5] call the routine @us@todo: need to check RN16 in the future, fake Tx in TX
 
 	;Restore faster Rx Clock
 	;MOV		&(INFO_ADDR_RXUCS0), &UCSCTL0 ;[] switch to corr Rx Frequency
@@ -183,6 +183,15 @@ handleQuery:
 
 	CLR		&TA0CTL
 
+	;Parse M as cmd[0].b2-b1
+	MOV.B	(cmd),	R_scratch0				;[3] parse TRext
+	AND.B	#0x06,	R_scratch0				;[1] it is in cmd[0].b2-b1
+	MOV		#TX_METHODS, R_scratch1			;[1]
+	ADD		R_scratch0, R_scratch1			;[1]
+	MOV		@R_scratch1, &(rfid.txMethod)	;[5] Move the correct tx method into place
+	RRA.B	R_scratch0						;[1] Right shift one bit
+	MOV.B	R_scratch0, &(rfid.m)			;[4] push it out
+
 	;Parse TRext as cmd[0].b0
 	MOV.B	(cmd),	R_scratch0		;[3] parse TRext
 	AND.B	#0x01,	R_scratch0		;[1] it is cmd[0].b0
@@ -254,13 +263,13 @@ queryTimingLoop:
 	SWPB	R_scratch0				;[1] swap bytes so we can shove full word out in one call (MSByte into dataBuf[0],...)
 	MOV		R_scratch0, 	&(rfidBuf) ;[4] load the MSByte
 
-	;Setup TxFM0
-	;TRANSMIT (16pre,38tillTxinTxFM0 -> 54cycles)
+	;Setup Tx
+	;TRANSMIT (16pre,38tillTxinTx -> 54cycles)
 	MOV		#(rfidBuf),		R12		;[2] load the &rfidBuf[0]
 	MOV		#(2),			R13		;[1] load into corr reg (numBytes)
 	MOV		#(0),			R14		;[1] load numBits=0
 	MOV.B	rfid.TRext,		R15		;[3] load TRext
-	CALLA	#TxFM0					;[5] call the routine
+	CALLA	rfid.txMethod			;[5] call the routine
 
 
 	;Restore faster Rx Clock
@@ -332,8 +341,8 @@ ackTimingLoop:
 	DEC		R5						;[1] Info stored in N: N = (R5<0)
 	JNZ		ackTimingLoop			;[2] Break out of loop on N
 
-	;Setup TxFM0
-	;TRANSMIT (16pre,38tillTxinTxFM0 -> 54cycles)
+	;Setup Tx
+	;TRANSMIT (16pre,38tillTxinTx -> 54cycles)
 	MOV		#dataBuf,	R12			;[2] load the &dataBuf[0]
 	MOV		#DATABUFF_SIZE,	R13			;[1] load into corr reg (numBytes)
 	MOV		#(0),		R14			;[1] load numBits=0
@@ -341,7 +350,7 @@ ackTimingLoop:
 
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;NO HIT
 
-	CALLA	#TxFM0					;[5] call transmit routine
+	CALLA	rfid.txMethod			;[5] call transmit routine
 
 	;Restore faster Rx Clock
 	;/** @todo Should we do this now, or at the top of keepDoingRFID? */
@@ -461,14 +470,14 @@ QATimingLoop:
 	SWPB	R_scratch0				;[1] swap bytes so we can shove full word out in one call (MSByte into dataBuf[0],...)
 	MOV		R_scratch0, &(rfidBuf)	;[4] load the MSByte
 
-	;Setup TxFM0
-	;TRANSMIT (16pre,38tillTxinTxFM0 -> 54cycles)
+	;Setup Tx
+	;TRANSMIT (16pre,38tillTxinTx -> 54cycles)
 	MOV		#(rfidBuf),	R12			;[2] load the &rfidBuf[0]
 	MOV		#(2),		R13			;[1] load into corr reg (numBytes)
 	MOV		#(0),		R14			;[1] load numBits=0
 	MOV.B	rfid.TRext,	R15			;[3] load TRext
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;NO HIT
-	CALLA	#TxFM0					;[5] call the routine
+	CALLA	rfid.txMethod			;[5] call the routine
 
 	;Restore faster Rx Clock
 	;MOV		&(INFO_ADDR_RXUCS0), &UCSCTL0 ;[] switch to corr Rx Frequency
@@ -562,14 +571,14 @@ REQRNTimingLoop:
 	DEC		R5						;[1] Info stored in N: N = (R5<0)
 	JNZ		REQRNTimingLoop			;[2] Break out of loop on N
 
-	;Setup TxFM0
-	;TRANSMIT (16pre,38tillTxinTxFM0 -> 54cycles)
+	;Setup Tx
+	;TRANSMIT (16pre,38tillTxinTx -> 54cycles)
 	MOV		#(rfidBuf),	R12			;[2] load the &rfidBuf[0]
 	MOV		#(4),		R13			;[1] load into corr reg (numBytes)
 	MOV		#(0),		R14			;[1] load numBits=0
 	MOV.B	rfid.TRext,	R15			;[3] load TRext
 ;;;;;;;;;;;;;;;;;;;;;;; NO HIT
-	CALLA	#TxFM0					;[5] call the routine
+	CALLA	rfid.txMethod			;[5] call the routine
 
 	;Restore faster Rx Clock
 	;MOV		&(INFO_ADDR_RXUCS0), &UCSCTL0 ;[] switch to corr Rx Frequency

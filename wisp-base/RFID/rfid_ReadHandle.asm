@@ -362,7 +362,7 @@ waitOnBits_2a:
 ;			Entry Timing: 31 cycles remaining before end of Rx Byte 7											 					 *
 ;			Exit Timing:  31  cycles remaining before end of Rx Byte 7											 					 *
 ;			Spare Timing: 31 + 2lastBits*6.25us*12cyc/bit*40%RX_SM_loading = 91 before 16.125us T1 window begins					 *
-;						  then, 16.125*12-64cycToPrepTxFM0 = 129 cycles in the T1 window for use									 *
+;						  then, 16.125*12-64cycToPrepTx = 129 cycles in the T1 window for use									 *
 ;			Net Spare:	  91+129 = 220 cycles (10us)																				 *												
 ;************************************************************************************************************************************/
 	;Wait for All Bits to Come in(2+8+2+8+8+16+16) all of it!
@@ -386,7 +386,7 @@ timing_delay_for_Read:
 	CMP		#0XFFFF,		R15		;[1] 'when X underflows'
 	JNE		timing_delay_for_Read	;[2]	
 
-	;TRANSMIT (16pre,38tillTxinTxFM0 -> 54cycles)
+	;TRANSMIT (16pre,38tillTxinTx -> 54cycles)
 	MOV		#rfidBuf, 	R12			;[2] load the &rfidBuf[0]
 	
 	POPM.A	#1,	R15					;[2] recall value of wordCt from stack
@@ -397,8 +397,8 @@ timing_delay_for_Read:
 	
 	MOV.B	rfid.TRext,	R15			;[3] load TRext
 	
-	CALLA	#TxFM0					;[5] call the routine
-	;TxFM0(volatile uint8_t *data,uint8_t numBytes,uint8_t numBits,uint8_t TRext);
+	CALLA	rfid.txMethod			;[5] call the routine
+	;Tx(volatile uint8_t *data,uint8_t numBytes,uint8_t numBits,uint8_t TRext);
 	;exit: state stays as Open!
 
 	;Done with the read!

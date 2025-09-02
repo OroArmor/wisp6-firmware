@@ -11,6 +11,7 @@
 // Gen2 state variables
 RFIDstruct  rfid;   // inventory state
 RWstruct    RWData; // tag-access state
+void* TX_METHODS[] = {&TxFM0, &TxM2, &TxFM0, &TxFM0}; 
 
 // Buffers for Gen2 protocol data
 uint8_t cmd[CMDBUFF_SIZE];      // command from reader
@@ -61,6 +62,8 @@ void WISP_init(void) {
 	BITCLR(CSCTL6 , (MODCLKREQEN|SMCLKREQEN|MCLKREQEN));
 	BITSET(CSCTL6 , ACLKREQEN);
 
+    rfid.m = FM0;
+    rfid.txMethod = TX_METHODS[rfid.m];
 
     // Initialize Gen2 standard memory banks
     RWData.EPCBankPtr = &dataBuf[0];                    // volatile
