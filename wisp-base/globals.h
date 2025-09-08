@@ -104,8 +104,6 @@ typedef enum {
 
 //THE RFID STRUCT FOR INVENTORY STATE VARS
 typedef struct {
-    ModulationFormat m;                     /** The number of cycles per symbol transmitted */
-    void* txMethod;                         /** The Tx method to be used */
     uint8_t     TRext;                      /** @todo What is this member? */
     uint16_t    handle;                     /** @todo What is this member? */
     uint16_t    slotCount;                  /** @todo What is this member? */
@@ -121,7 +119,8 @@ typedef struct {
     uint16_t	edge_capture_prev_ccr;		/* Previous value of CCR register, used to compute delta in edge capture ISRs		*/
 
     /** @todo Add the following: CMD_enum latestCmd; */
-
+    ModulationFormat m;                     /** The number of cycles per symbol transmitted */
+    void* txMethod;                         /** The Tx method to be used */
 }RFIDstruct;                                /* in MODE_USES_SEL!!                                                               */
 
 extern RFIDstruct   rfid;
