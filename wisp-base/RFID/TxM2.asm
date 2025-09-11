@@ -89,7 +89,10 @@ Send_A_Pilot_Tone:
     ;*Timing Optimization Shoved Here(5 free cycles)*/
     MOV.B   #0x00, R_scratch0		;[1] setup R_scratch0 as LOW (note: if this is skipped, make sure to do it in preamble below too)
     NOPx4							;[4] 4 timing cycles
-    ;*End of 5 free cycles*/
+    MOV.B   R_scratch0, &PTXOUT		;[4] LOW on PTXOUT.PIN_TX
+    NOPx5
+    MOV.B   R_scratch1, &PTXOUT		;[4] HIGH on PTXOUT.PIN_TX
+    NOPx5
     MOV.B   R_scratch0, &PTXOUT		;[4] LOW on PTXOUT.PIN_TX
     NOP								;[1] 1 timing cycles
     DEC     R_scratch2				;[1] decrement the tone count
@@ -122,13 +125,13 @@ Send_Preamble:
     NOPx5							;[5] 5 timing cycles
 
 
-    MOV.B   R_scratch1, &PTXOUT		;[4] HIGH on PTXOUT.PIN_TX       /* 0: HLHL */
-    NOPx5							;[5] 5 timing cycles
-    MOV.B   R_scratch0, &PTXOUT		;[4] LOW on PTXOUT.PIN_TX
+    MOV.B   R_scratch0, &PTXOUT		;[4] LOW on PTXOUT.PIN_TX       /* 0: LHLH */
     NOPx5							;[5] 5 timing cycles
     MOV.B   R_scratch1, &PTXOUT		;[4] HIGH on PTXOUT.PIN_TX
     NOPx5							;[5] 5 timing cycles
     MOV.B   R_scratch0, &PTXOUT		;[4] LOW on PTXOUT.PIN_TX
+    NOPx5							;[5] 5 timing cycles
+    MOV.B   R_scratch1, &PTXOUT		;[4] HIGH on PTXOUT.PIN_TX
     NOPx5							;[5] 5 timing cycles
 
     MOV.B   R_scratch0, &PTXOUT		;[4] LOW on PTXOUT.PIN_TX       /* 1: LHHL */
@@ -213,9 +216,10 @@ Clean_Up:
     INV.B   R_scratch1				;[1]
     MOV.B   R_scratch1, &PTXOUT		;[4]
 
-   	POPM.A #5, R10					;[?] Restore preserved registers R6-R10 /** @todo Find out how long this takes *
+   	BIC.B	#0x81, &PTXOUT			;[] Clear 1.0 & 1.7 (1.0 is for old 4.1 HW, 1.7 is for current hack...) eventually just 1.0
 
-    BIC.B	#0x81, &PTXOUT			;[] Clear 1.0 & 1.7 (1.0 is for old 4.1 HW, 1.7 is for current hack...) eventually just 1.0
+    POPM.A #5, R10					;[?] Restore preserved registers R6-R10 /** @todo Find out how long this takes *
+
     RETA
     
 Skip_Read:
