@@ -11,7 +11,10 @@
 // Gen2 state variables
 RFIDstruct  rfid;   // inventory state
 RWstruct    RWData; // tag-access state
-void* TX_METHODS[] = {&TxFM0, &TxM2, &TxFM0, &TxFM0}; 
+
+TX_Func TX_METHODS[4] = {
+    TxFM0, TxM2, TxFM0, TxFM0
+};
 
 // Buffers for Gen2 protocol data
 uint8_t cmd[CMDBUFF_SIZE];      // command from reader

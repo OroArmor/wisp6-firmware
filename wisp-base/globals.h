@@ -95,6 +95,8 @@
 
 //TYPEDEFS------------------------------------------------------------------------------------------------------------------------
 
+typedef void (*TX_Func)(volatile uint8_t *, uint8_t, uint8_t, uint8_t);
+
 typedef enum {
     FM0 = 0,
     M2 = 1,
@@ -120,7 +122,7 @@ typedef struct {
 
     /** @todo Add the following: CMD_enum latestCmd; */
     ModulationFormat m;                     /** The number of cycles per symbol transmitted */
-    void* txMethod;                         /** The Tx method to be used */
+    TX_Func txMethod;                         /** The Tx method to be used */
 }RFIDstruct;                                /* in MODE_USES_SEL!!                                                               */
 
 extern RFIDstruct   rfid;
@@ -174,7 +176,7 @@ extern void WISP_doRFID(void);
 extern void TxFM0(volatile uint8_t *data, uint8_t numBytes, uint8_t numBits, uint8_t TRext); //sends out MSB first...
 extern void TxM2(volatile uint8_t *data, uint8_t numBytes, uint8_t numBits, uint8_t TRext); //sends out MSB first...
 
-extern void* TX_METHODS[4]; 
+extern TX_Func TX_METHODS[4];
 
 // Linker hack: We need to reference assembly ISRs directly somewhere to force linker to include them in binary.
 extern void RX_ISR(void);

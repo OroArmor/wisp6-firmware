@@ -186,10 +186,12 @@ handleQuery:
 	;Parse M as cmd[0].b2-b1
 	MOV.B	(cmd),	R_scratch0				;[3] parse TRext
 	AND.B	#0x06,	R_scratch0				;[1] it is in cmd[0].b2-b1
+	RLA.B	R_scratch0						;[1] Left shift one bit, alignment is 4 bytes
 	MOV		#TX_METHODS, R_scratch1			;[1]
 	ADD		R_scratch0, R_scratch1			;[1]
 	MOV		@R_scratch1, &(rfid.txMethod)	;[5] Move the correct tx method into place
-	RRA.B	R_scratch0						;[1] Right shift one bit
+	RRA.B	R_scratch0						;[1] Right shift two bits
+	RRA.B	R_scratch0						;[1] Right shift two bits
 	MOV.B	R_scratch0, &(rfid.m)			;[4] push it out
 
 	;Parse TRext as cmd[0].b0
