@@ -48,7 +48,7 @@ M2_STATE:
 
 .text
 ;/Timing Notes------------------------------------------------------------------------------------------------------------------------
-    ;*   Cycles Between Bits: 9 (for LF=640kHz @ 11.52MHz CPU)                                                                      */
+    ;*   Cycles Between Bits: 9 (for LF=320kHz @ 11.52MHz CPU)                                                                      */
     ;/** @todo Make sure the proper link frequency is listed here, or give a table of LF vs clock frequency							*/
     ;*   Cycles Before First Bit Toggle: 29 worst case                                                                              */
 

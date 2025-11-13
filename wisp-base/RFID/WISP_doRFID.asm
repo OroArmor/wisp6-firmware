@@ -39,9 +39,6 @@ WISP_doRFID:
 ;/************************************************************************************************************************************
 ;/								PREP THE DATABUF W/STOREDPC AND A CRC16 (225 cycles, 55us)                                     		 *
 ;/************************************************************************************************************************************
-	MOV.B #0, entered
-	MOV.B #0, exitedSuccessfully
-
 	;Load the Stored Protocol Control (PC) values
 	MOV.B		#(STORED_PC1), &(dataBuf)	;[5]
 	MOV.B		#(STORED_PC0), &(dataBuf+1)	;[5]

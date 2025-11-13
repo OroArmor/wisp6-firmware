@@ -37,7 +37,7 @@ R_scratch0	.set	R15
 ; all we backscatter is our RN16.
 ;//***********************************************************************************************************************************
 handleQR:
-	BIS.B #2, &entered
+	BIS.B #4, &entered
 	;Don't need to wait for bits, RX_SM already woke us up.
 	BIC		#(GIE),	SR				;[] clear the GIE bit just as a safety. RX_SM already cleared it for us.
 	NOP
@@ -91,7 +91,7 @@ QRTimingLoop:
 
 	CALLA #RxClock	;Switch to Rx Clock
 
-	BIS.B #2, &exitedSuccessfully
+	BIS.B #4, &exitedSuccessfully
 	RETA
 
 
@@ -157,7 +157,7 @@ handleQuery:
 	; STEP 1: Parse the Command
 	;*********************************************************************************************************************************
 	
-	BIS.B #0, &entered
+	BIS.B #1, &entered
 
 	;Avoid deadlock, check if we timed out------------------------------------------------------------------------------------------//
 	TST.B	(rfid.abortFlag)
@@ -285,9 +285,9 @@ queryTimingLoop:
 ;	MOV.W		#(DCOFSEL0|DCOFSEL1), &CSCTL1;
 ;	MOV.W		#(SELA_0|SELS_3|SELM_3), &CSCTL2;
 ;	MOV.W		#(DIVA_0|DIVS_0|DIVM_0), &CSCTL3;
+	BIS.B #1, &exitedSuccessfully
 
 doneQuery:
-	BIS.B #0, &exitedSuccessfully
 	RETA											;[5]
 
 
@@ -299,7 +299,7 @@ doneQuery:
 ;	- Generate a Slot Count, Update Handle, and Talk back if ready!
 ;//***********************************************************************************************************************************
 handleAck:
-	BIS.B #1, &entered
+	BIS.B #2, &entered
 
 ackWaits:
 	;Avoid deadlock, check if we timed out------------------------------------------------------------------------------------------//
@@ -358,6 +358,7 @@ ackTimingLoop:
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;NO HIT
 
 	CALLA	rfid.txMethod			;[5] call transmit routine
+	BIS.B #2, &exitedSuccessfully
 
 	;Restore faster Rx Clock
 	;/** @todo Should we do this now, or at the top of keepDoingRFID? */
@@ -385,7 +386,6 @@ ackBreakOutofRFID:
 	BIS.B		#1, (rfid.abortFlag);[] by setting this bit we'll abort correctly!
 
 doneAck:
-	BIS.B #1, &exitedSuccessfully
 	RETA
 
 ;//***********************************************************************************************************************************
@@ -396,7 +396,7 @@ doneAck:
 ; - if 0, backscatter
 ;//***********************************************************************************************************************************
 handleQA:
-	BIS.B #3, &entered
+	BIS.B #8, &entered
 	;Wait for enough bits to parse Q (8) only need first two bits to uniquely identify Q.
 	BIC		#(GIE),	SR
 	NOP
@@ -497,7 +497,7 @@ QATimingLoop:
 ;	MOV.W		#(SELA_0|SELS_3|SELM_3), &CSCTL2;
 ;	MOV.W		#(DIVA_0|DIVS_0|DIVM_0), &CSCTL3;
 
-	BIS.B #3, &exitedSuccessfully
+	BIS.B #8, &exitedSuccessfully
 	RETA
 
 
@@ -505,7 +505,7 @@ QATimingLoop:
 ; REQ RN HANDLE
 ;*************************************************************************************************************************************
 handleReqRN:
-	BIS.B #4, &entered
+	BIS.B #16, &entered
 
 	;Avoid deadlock, check if we timed out------------------------------------------------------------------------------------------//
 	TST.B	(rfid.abortFlag)
@@ -602,7 +602,7 @@ REQRNTimingLoop:
 ;	MOV.W		#(DIVA_0|DIVS_0|DIVM_0), &CSCTL3;
 
 doneReqRN:
-	BIS.B #4, &exitedSuccessfully
+	BIS.B #16, &exitedSuccessfully
 	RETA
 
 
@@ -650,7 +650,7 @@ reqRN_badHandle:
 ;
 ;*************************************************************************************************************************************
 handleSelect:
-	BIS.B #5, &entered
+	BIS.B #32, &entered
 	;*********************************************************************************************************************************
 	; STEP 0: Decide if we Handle Select
 	;	- if we do, wait for all bits to come in
@@ -745,7 +745,7 @@ dontHandleSelect:
 	MOV.B	#1,	&(rfid.isSelected)	;[]  if we're not in MODE_USES_SEL, then leave isSelected true so it handles other commands.
 
 doneSelect:
-	BIS.B #5, &exitedSuccessfully
+	BIS.B #32, &exitedSuccessfully
 	RETA
 
 	.end

@@ -93,5 +93,10 @@ void main(void) {
   // Talk to the RFID reader.
   while (FOREVER) {
     WISP_doRFID();
+
+    if (entered == 0b111 && exitedSuccessfully == 0b111) {
+      entered = 0;
+      exitedSuccessfully = 0;
+    }
   }
 }
