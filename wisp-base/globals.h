@@ -193,6 +193,10 @@ extern void handleRead      (void);
 extern void handleWrite     (void);
 extern void handleBlockWrite(void);
 
+// Query, Ack, QR, QA, Req, Select
+extern uint8_t entered;
+extern uint8_t exitedSuccessfully;
+
 //MACROS----------------------------------------------------------------------------------------------------------------------------//
 #define BITSET(port,pin)    port |= (pin)
 #define BITCLR(port,pin)    port &= ~(pin)

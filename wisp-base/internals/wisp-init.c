@@ -16,6 +16,9 @@ TX_Func TX_METHODS[4] = {
     TxFM0, TxM2, TxFM0, TxFM0
 };
 
+uint8_t entered = 0;
+uint8_t exitedSuccessfully = 0;
+
 // Buffers for Gen2 protocol data
 uint8_t cmd[CMDBUFF_SIZE];      // command from reader
 uint8_t dataBuf[DATABUFF_SIZE]; // tag's response to reader
